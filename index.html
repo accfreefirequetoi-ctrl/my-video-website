@@ -4,34 +4,18 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#000000">
-  <title>Video</title>
+  <title>GIF</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main class="stage" id="stage">
-    <video
-      id="mainVideo"
-      class="video"
-      autoplay
-      loop
-      playsinline
-      preload="auto"
-      disablepictureinpicture
-      controlslist="nodownload noplaybackrate noremoteplayback"
-    >
-      <source src="videos/video.mp4" type="video/mp4">
-      Trình duyệt của bạn không hỗ trợ video HTML5.
-    </video>
-
+    <img id="mainGif" class="video" src="videos/reaction.gif" alt="GIF đang phát">
+    <canvas id="frozenFrame" class="video" hidden aria-label="GIF đã phát xong"></canvas>
     <div class="message" id="message" role="status">
-      <p id="messageText">Đang tải video…</p>
-      <button id="startButton" type="button" hidden>Phát video</button>
+      <p id="messageText">Đang tải GIF…</p>
+      <button id="startButton" type="button" hidden>Bắt đầu</button>
     </div>
-
-    <button class="fullscreen-button" id="fullscreenButton" type="button"
-            aria-label="Bật toàn màn hình">
-      Toàn màn hình
-    </button>
+    <button class="fullscreen-button" id="fullscreenButton" type="button" aria-label="Bật toàn màn hình">Toàn màn hình</button>
   </main>
   <script src="script.js"></script>
 </body>
