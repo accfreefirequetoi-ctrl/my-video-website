@@ -1,9 +1,19 @@
-const video = document.getElementById("mainVideo");
+const gif = document.getElementById("mainGif");
+const frozenFrame = document.getElementById("frozenFrame");
 const stage = document.getElementById("stage");
 const message = document.getElementById("message");
 const messageText = document.getElementById("messageText");
 const startButton = document.getElementById("startButton");
 const fullscreenButton = document.getElementById("fullscreenButton");
+
+const TOTAL_LOOPS = 10;
+// Estimated duration from the Tenor listing; timing may vary slightly by browser.
+const LOOP_DURATION_MS = 4700;
+
+let loopsCompleted = 0;
+let timer = null;
+let started = false;
+let finished = false;
 
 function showMessage(text, showStart = false) {
   messageText.textContent = text;
@@ -16,58 +26,64 @@ function hideMessage() {
 }
 
 async function tryFullscreen() {
-  // Fullscreen API normally requires a direct user gesture.
   try {
     if (document.fullscreenElement) return true;
     if (stage.requestFullscreen) {
       await stage.requestFullscreen();
       return true;
     }
-  } catch (_) {
-    // Browser denied automatic fullscreen; the user can tap the button.
-  }
+  } catch (_) {}
   return false;
 }
 
-async function playWithSound() {
-  video.muted = false;
-  video.volume = 1;
-  try {
-    await video.play();
-    hideMessage();
-    return true;
-  } catch (_) {
-    showMessage("Trình duyệt đang chặn tự phát có âm thanh. Nhấn để bắt đầu.", true);
-    return false;
-  }
+function freezeLastFrame() {
+  const width = gif.naturalWidth || 360;
+  const height = gif.naturalHeight || 202;
+  frozenFrame.width = width;
+  frozenFrame.height = height;
+  frozenFrame.getContext("2d").drawImage(gif, 0, 0, width, height);
+  gif.hidden = true;
+  frozenFrame.hidden = false;
+  finished = true;
+  showMessage("Đã phát xong 10 lượt.", false);
 }
 
-startButton.addEventListener("click", async () => {
-  const played = await playWithSound();
-  if (played) await tryFullscreen();
-});
+function playOneLoop() {
+  if (finished) return;
+  gif.hidden = false;
+  frozenFrame.hidden = true;
+  gif.onload = () => {
+    hideMessage();
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      loopsCompleted += 1;
+      if (loopsCompleted >= TOTAL_LOOPS) {
+        freezeLastFrame();
+      } else {
+        gif.src = "videos/reaction.gif?play=" + (loopsCompleted + 1);
+      }
+    }, LOOP_DURATION_MS);
+  };
+  gif.onerror = () => showMessage("Không tải được videos/reaction.gif. Hãy kiểm tra tên tệp.", false);
+  gif.src = "videos/reaction.gif?play=" + (loopsCompleted + 1);
+}
 
+async function start() {
+  if (started || finished) return;
+  started = true;
+  hideMessage();
+  await tryFullscreen();
+  playOneLoop();
+}
+
+startButton.addEventListener("click", start);
 fullscreenButton.addEventListener("click", async () => {
-  if (!document.fullscreenElement) {
-    await tryFullscreen();
-  } else if (document.exitFullscreen) {
-    await document.exitFullscreen();
-  }
+  if (!document.fullscreenElement) await tryFullscreen();
+  else if (document.exitFullscreen) await document.exitFullscreen();
 });
 
-video.addEventListener("playing", hideMessage);
-video.addEventListener("waiting", () => showMessage("Đang tải video…"));
-video.addEventListener("error", () => {
-  showMessage("Không tải được video. Hãy kiểm tra tệp videos/video.mp4.", false);
+window.addEventListener("load", () => {
+  showMessage("Nhấn Bắt đầu để phát GIF 10 lượt và thử bật toàn màn hình.", true);
 });
 
-// Best-effort autoplay with sound. Browsers commonly block this until a tap.
-window.addEventListener("load", async () => {
-  const played = await playWithSound();
-  if (played) await tryFullscreen();
-});
-
-// Hide the native context menu and keep native playback controls hidden.
-// This is only a UI deterrent, not copy protection.
 document.addEventListener("contextmenu", event => event.preventDefault());
-video.controls = false;
